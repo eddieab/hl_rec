@@ -7,13 +7,24 @@
 #include <array>
 
 namespace color {
+const float eps = 216.f / 24389.f;
+const float kappa = 24389.f / 27.f;
+
 const float srgb2xyz[3][3] = {
     {0.4124564f, 0.3575761f, 0.1804375f},
     {0.2126729f, 0.7151522f, 0.0721750f},
     {0.0193339f, 0.1191920f, 0.9503041f}
 };
 
+const float xyz2srgb[3][3] = {
+    {3.2404542f, -1.5371385f, -0.4985314f},
+    {-0.9692660f, 1.8760108f, 0.0415560f},
+    {0.0556434f, -0.2040259f, 1.0572252f}
+};
+
 const float D50[3]{0.34567f, 0.35850f, 1.00000f};
+
+const float xyz_d65[3] = {0.95047f, 1.f, 1.08883f};
 
 const float illuminant_standard_light_A = 1.4388f / 1.435f * 2848.f;
 const float illuminant_D65 = 1.4388f / 1.438f * 6500.f;

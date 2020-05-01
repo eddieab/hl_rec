@@ -1,9 +1,6 @@
 #include "halide_benchmark.h"
 
 #include "camera_pipe.h"
-#ifndef NO_AUTO_SCHEDULE
-#include "camera_pipe_auto_schedule.h"
-#endif
 
 #include <cstdio>
 #include <cstdlib>
@@ -124,10 +121,12 @@ int main(int argc, char **argv) {
 
   color::mat_inv(rgb2cam, cam2rgb);
 
-  Halide::Runtime::Buffer<float> cm(3, 3);
+  Halide::Runtime::Buffer<float> cm(3, 3), icm(3, 3);
   for (int i = 0; i < 3; i++)
-    for (int j = 0; j < 3; j++)
+    for (int j = 0; j < 3; j++) {
       cm(i, j) = cam2rgb[i][j];
+      icm(i, j) = rgb2cam[i][j];
+    }
 
   int timing_iterations = 1000;
   float blackLevel = image.black_level[0];
@@ -146,27 +145,46 @@ int main(int argc, char **argv) {
   cfa(1, 0) = cfa(1, 1) % 2 == 1 ? cfa(1, 1) - 1 : cfa(1, 1) + 1;
 
   double best;
+  bool hsv = true;
   bool hdr = false;
   bool log = true;
 
   best = Halide::Tools::benchmark(timing_iterations, 1, [&]() {
-    camera_pipe(input, wb, cm, cfa, blackLevel, whiteLevel, hdr, log, output);
+    camera_pipe(input, wb, cm, icm, cfa, blackLevel, whiteLevel, hsv, hdr, log, output);
     output.device_sync();
   });
   fprintf(stderr, "Halide (manual):\t%gus\n", best * 1e6);
-
-#ifndef NO_AUTO_SCHEDULE
-  best = Halide::Tools::benchmark(timing_iterations, 1, [&]() {
-    camera_pipe(input, wb, cm, cfa, blackLevel, whiteLevel, hdr, log, output);
-    output.device_sync();
-  });
-  fprintf(stderr, "Halide (auto):\t%gus\n", best * 1e6);
-#endif
+  fprintf(stderr, "Halide (manual):\t%gfps\n", 1.f / best);
 
   fprintf(stderr, "output: %s\n", "sdr.png");
-  Halide::Tools::save_image(output, "sdr.png");
-  fprintf(stderr, "        %d %d\n", output.width(), output.height
-  ());
+  Halide::Tools::save_image(output, "output/sdr.png");
+  fprintf(stderr, "        %d %d\n", output.width(), output.height());
+
+  hdr = true;
+
+  best = Halide::Tools::benchmark(timing_iterations, 1, [&]() {
+    camera_pipe(input, wb, cm, icm, cfa, blackLevel, whiteLevel, hsv, hdr, log, output);
+    output.device_sync();
+  });
+  fprintf(stderr, "Halide (manual):\t%gus\n", best * 1e6);
+  fprintf(stderr, "Halide (manual):\t%gfps\n", 1.f / best);
+
+  fprintf(stderr, "output: %s\n", "hsv.png");
+  Halide::Tools::save_image(output, "output/hsv.png");
+  fprintf(stderr, "        %d %d\n", output.width(), output.height());
+
+  hsv = false;
+
+  best = Halide::Tools::benchmark(timing_iterations, 1, [&]() {
+    camera_pipe(input, wb, cm, icm, cfa, blackLevel, whiteLevel, hsv, hdr, log, output);
+    output.device_sync();
+  });
+  fprintf(stderr, "Halide (manual):\t%gus\n", best * 1e6);
+  fprintf(stderr, "Halide (manual):\t%gfps\n", 1.f / best);
+
+  fprintf(stderr, "output: %s\n", "lch.png");
+  Halide::Tools::save_image(output, "output/lch.png");
+  fprintf(stderr, "        %d %d\n", output.width(), output.height());
 
   return EXIT_SUCCESS;
 }
