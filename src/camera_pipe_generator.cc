@@ -101,6 +101,7 @@ class CameraPipe : public Halide::Generator<CameraPipe> {
   Input<Buffer<int>> cfa{"cfa", 2};
   Input<int> blackLevel{"blackLevel"};
   Input<int> whiteLevel{"whiteLevel"};
+  Input<float> gain{"gain"};
   Input<bool> hsv{"hsv"};
   Input<bool> hdr{"hdr"};
   Input<bool> is_log{"is_log"};
@@ -205,7 +206,7 @@ Expr CameraPipe::lch_rec(Func rgb) {
 Func CameraPipe::scale(Func input) {
   Expr diff = 1.f / (whiteLevel - blackLevel);
   Func scaled("scaled");
-  scaled(x, y) = clamp((input(x, y) - blackLevel) * diff, 0.f, 1.f);
+  scaled(x, y) = clamp((input(x, y) - blackLevel) * diff * gain, 0.f, 1.f);
   return scaled;
 }
 

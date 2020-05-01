@@ -13,5 +13,6 @@ static inline unsigned short swap2(unsigned short);
 void decode12(Halide::Runtime::Buffer<float> &, const unsigned char *, int, int);
 void decode14(Halide::Runtime::Buffer<float> &, const unsigned char *, int, int);
 void decode16(Halide::Runtime::Buffer<float> &, const unsigned char *, int, int);
+double process(std::string, std::string);
 
 #endif //HL_REC_SRC_IMAGE_IO_HH_
