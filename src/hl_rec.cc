@@ -27,6 +27,8 @@ int main(int argc, char **argv) {
       parent.erase(remove(parent.begin(), parent.end(), '\"'), parent.end());
       dng.erase(remove(dng.begin(), dng.end(), '\"'), dng.end());
 
+      std::cout << dng << std::endl;
+
       auto time = process(filepath, parent);
       total_time += time;
       ++total_dng;

@@ -280,7 +280,8 @@ double process(std::string filepath, std::string outdir) {
     });
     avg += best;
     file = outdir + "/sdr_log_+" + std::to_string(int(log2(gain))) + "ev.png";
-    Halide::Tools::save_image(output, file);
+    auto cropped = output.cropped({{0, width / 4}, {0, height / 4}});
+    Halide::Tools::save_image(cropped, file);
 
     hdr = true;
     best = Halide::Tools::benchmark(1, 1, [&]() {
@@ -292,7 +293,8 @@ double process(std::string filepath, std::string outdir) {
     });
     avg += best;
     file = outdir + "/hsv_+" + std::to_string(int(log2(gain))) + "ev.png";
-    Halide::Tools::save_image(output, file);
+    cropped = output.cropped({{0, width / 4}, {0, height / 4}});
+    Halide::Tools::save_image(cropped, file);
 
     hsv = false;
     best = Halide::Tools::benchmark(1, 1, [&]() {
@@ -304,7 +306,8 @@ double process(std::string filepath, std::string outdir) {
     });
     avg += best;
     file = outdir + "/lch_+" + std::to_string(int(log2(gain))) + "ev.png";
-    Halide::Tools::save_image(output, file);
+    cropped = output.cropped({{0, width / 4}, {0, height / 4}});
+    Halide::Tools::save_image(cropped, file);
   }
 
   return avg / 9.;
