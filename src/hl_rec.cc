@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
   std::cout << "Total DNGs: " << total_dng << std::endl;
   std::cout << "Total FPS: " << total_dng / total_time << std::endl;
   outf << "Total DNGs: " << total_dng
-       << "Total Time: " << total_time
+       << " | Total Time: " << total_time
        << " | Total FPS: " << total_dng / total_time
        << std::endl;
   outf.close();

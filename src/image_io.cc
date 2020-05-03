@@ -196,8 +196,6 @@ double process(std::string filepath, std::string outdir) {
     return EXIT_FAILURE;
   }
 
-  Halide::Runtime::Buffer<uint8_t> output(outw, outh, 3);
-
   // prep color matrices
   const float A = 1.4388f / 1.435f * 2848.f;
   const float D65 = 1.4388f / 1.438f * 6500.f;
@@ -266,21 +264,26 @@ double process(std::string filepath, std::string outdir) {
   std::string file;
   double best;
   double avg = 0.;
-  bool hsv = true;
-  bool hdr = false;
-  bool log = true;
 
   for (float gain = 1.f; gain < 8.f; gain *= 2.f) {
+    Halide::Runtime::Buffer<uint8_t> sdr(outw, outh, 3);
+    Halide::Runtime::Buffer<uint8_t> hsl(outw, outh, 3);
+    Halide::Runtime::Buffer<uint8_t> lch(outw, outh, 3);
+
+    bool hsv = true;
+    bool hdr = false;
+    bool log = true;
+
     best = Halide::Tools::benchmark(1, 1, [&]() {
       camera_pipe(input,
                   wb, cm, icm, cfa, blackLevel, whiteLevel, gain,
                   hsv, hdr, log,
-                  output);
-      output.device_sync();
+                  sdr);
+      sdr.device_sync();
     });
     avg += best;
     file = outdir + "/sdr_log_+" + std::to_string(int(log2(gain))) + "ev.png";
-    auto cropped = output.cropped({{0, width / 4}, {0, height / 4}});
+    auto cropped = sdr.cropped({{0, width / 4}, {0, height / 4}});
     Halide::Tools::save_image(cropped, file);
 
     hdr = true;
@@ -288,12 +291,12 @@ double process(std::string filepath, std::string outdir) {
       camera_pipe(input,
                   wb, cm, icm, cfa, blackLevel, whiteLevel, gain,
                   hsv, hdr, log,
-                  output);
-      output.device_sync();
+                  hsl);
+      hsl.device_sync();
     });
     avg += best;
     file = outdir + "/hsv_+" + std::to_string(int(log2(gain))) + "ev.png";
-    cropped = output.cropped({{0, width / 4}, {0, height / 4}});
+    cropped = hsl.cropped({{0, width / 4}, {0, height / 4}});
     Halide::Tools::save_image(cropped, file);
 
     hsv = false;
@@ -301,12 +304,12 @@ double process(std::string filepath, std::string outdir) {
       camera_pipe(input,
                   wb, cm, icm, cfa, blackLevel, whiteLevel, gain,
                   hsv, hdr, log,
-                  output);
-      output.device_sync();
+                  lch);
+      lch.device_sync();
     });
     avg += best;
     file = outdir + "/lch_+" + std::to_string(int(log2(gain))) + "ev.png";
-    cropped = output.cropped({{0, width / 4}, {0, height / 4}});
+    cropped = lch.cropped({{0, width / 4}, {0, height / 4}});
     Halide::Tools::save_image(cropped, file);
   }
 
