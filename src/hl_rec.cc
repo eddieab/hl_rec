@@ -13,10 +13,16 @@ int main(int argc, char **argv) {
   int total_dng = 0;
   double total_time = 0.;
 
+  std::vector<std::string> list = {
+      "6G7M_20150403_165723_505",
+      "0132_20160917_184610_200",
+      "c1b1_20150408_154240_395"
+  };
+
   for (auto entry = fs::recursive_directory_iterator(input_directory);
        entry != fs::recursive_directory_iterator();
        ++entry) {
-    if (entry->is_regular_file() && entry->path().extension() == ".dng") {
+    if (fs::is_regular_file(entry->path()) && entry->path().extension() == ".dng") {
       auto f = entry->path();
       auto p = entry->path().parent_path();
       std::string filepath = f.string();
@@ -28,12 +34,13 @@ int main(int argc, char **argv) {
       dng.erase(remove(dng.begin(), dng.end(), '\"'), dng.end());
 
       std::cout << dng << std::endl;
+      if (std::find(list.begin(), list.end(), dng) != list.end()) {
+        auto time = process(filepath, parent);
+        total_time += time;
+        ++total_dng;
 
-      auto time = process(filepath, parent);
-      total_time += time;
-      ++total_dng;
-
-      outf << "dng: " << dng << " | time: " << time << " | fps: " << 1 / time << std::endl;
+        outf << "dng: " << dng << " | time: " << time << " | fps: " << 1 / time << std::endl;
+      }
     }
   }
 
