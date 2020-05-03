@@ -265,14 +265,15 @@ double process(std::string filepath, std::string outdir) {
   double best;
   double avg = 0.;
 
-  for (float gain = 1.f; gain < 8.f; gain *= 2.f) {
+  for (float gain = 4.f; gain < 16.f; gain *= 2.f) {
     Halide::Runtime::Buffer<uint8_t> sdr(outw, outh, 3);
+    Halide::Runtime::Buffer<uint8_t> sdrl(outw, outh, 3);
     Halide::Runtime::Buffer<uint8_t> hsl(outw, outh, 3);
     Halide::Runtime::Buffer<uint8_t> lch(outw, outh, 3);
 
     bool hsv = true;
     bool hdr = false;
-    bool log = true;
+    bool log = false;
 
     best = Halide::Tools::benchmark(1, 1, [&]() {
       camera_pipe(input,
@@ -282,9 +283,22 @@ double process(std::string filepath, std::string outdir) {
       sdr.device_sync();
     });
     avg += best;
-    file = outdir + "/sdr_log_+" + std::to_string(int(log2(gain))) + "ev.png";
+    file = outdir + "/sdr_+" + std::to_string(int(log2(gain))) + "ev.png";
     auto csdr = sdr.cropped({{0, width / 4}, {0, height / 4}});
     Halide::Tools::save_image(csdr, file);
+
+    log = true;
+    best = Halide::Tools::benchmark(1, 1, [&]() {
+      camera_pipe(input,
+                  wb, cm, icm, cfa, blackLevel, whiteLevel, gain,
+                  hsv, hdr, log,
+                  sdrl);
+      sdr.device_sync();
+    });
+    avg += best;
+    file = outdir + "/sdr_log_+" + std::to_string(int(log2(gain))) + "ev.png";
+    auto csdrl = sdrl.cropped({{0, width / 4}, {0, height / 4}});
+    Halide::Tools::save_image(csdrl, file);
 
     hdr = true;
     best = Halide::Tools::benchmark(1, 1, [&]() {
@@ -313,5 +327,5 @@ double process(std::string filepath, std::string outdir) {
     Halide::Tools::save_image(clch, file);
   }
 
-  return avg / 9.;
+  return avg / 8.;
 }
